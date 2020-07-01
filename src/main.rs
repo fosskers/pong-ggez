@@ -3,7 +3,7 @@ use ggez::event::EventHandler;
 use ggez::graphics::{self, Color, Rect};
 use ggez::input::keyboard::{self, KeyCode};
 use ggez::mint::Point2;
-use ggez::{Context, ContextBuilder, GameResult};
+use ggez::{Context, ContextBuilder, GameError, GameResult};
 use rand::prelude::ThreadRng;
 use rand::Rng;
 
@@ -213,47 +213,14 @@ impl EventHandler for State {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, Color::new(0.0, 0.0, 0.0, 1.0));
 
-        let trail_1_mesh = graphics::Mesh::new_rectangle(
-            ctx,
-            graphics::DrawMode::fill(),
-            self.trail_1.rect,
-            Color::new(1.0, 1.0, 1.0, 1.0),
-        )?;
+        let trail_1_mesh = rect_mesh(ctx, &self.trail_1.rect)?;
+        let trail_2_mesh = rect_mesh(ctx, &self.trail_2.rect)?;
+        let trail_3_mesh = rect_mesh(ctx, &self.trail_3.rect)?;
 
-        let trail_2_mesh = graphics::Mesh::new_rectangle(
-            ctx,
-            graphics::DrawMode::fill(),
-            self.trail_2.rect,
-            Color::new(1.0, 1.0, 1.0, 1.0),
-        )?;
+        let ball_mesh = rect_mesh(ctx, &self.ball.rect)?;
 
-        let trail_3_mesh = graphics::Mesh::new_rectangle(
-            ctx,
-            graphics::DrawMode::fill(),
-            self.trail_3.rect,
-            Color::new(1.0, 1.0, 1.0, 1.0),
-        )?;
-
-        let ball_mesh = graphics::Mesh::new_rectangle(
-            ctx,
-            graphics::DrawMode::fill(),
-            self.ball.rect,
-            Color::new(1.0, 1.0, 1.0, 1.0),
-        )?;
-
-        let l_paddle_mesh = graphics::Mesh::new_rectangle(
-            ctx,
-            graphics::DrawMode::fill(),
-            self.l_paddle,
-            Color::new(1.0, 1.0, 1.0, 1.0),
-        )?;
-
-        let r_paddle_mesh = graphics::Mesh::new_rectangle(
-            ctx,
-            graphics::DrawMode::fill(),
-            self.r_paddle,
-            Color::new(1.0, 1.0, 1.0, 1.0),
-        )?;
+        let l_paddle_mesh = rect_mesh(ctx, &self.l_paddle)?;
+        let r_paddle_mesh = rect_mesh(ctx, &self.r_paddle)?;
 
         graphics::draw(ctx, &ball_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &trail_1_mesh, graphics::DrawParam::default())?;
@@ -265,6 +232,15 @@ impl EventHandler for State {
         graphics::draw(ctx, &self.fps_text.0, self.fps_text.1)?;
         graphics::present(ctx) // Handle error better?
     }
+}
+
+fn rect_mesh(ctx: &mut Context, rect: &Rect) -> Result<graphics::Mesh, GameError> {
+    graphics::Mesh::new_rectangle(
+        ctx,
+        graphics::DrawMode::fill(),
+        *rect,
+        Color::new(1.0, 1.0, 1.0, 1.0),
+    )
 }
 
 fn main() -> GameResult {
