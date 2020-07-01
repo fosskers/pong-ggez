@@ -150,17 +150,27 @@ impl EventHandler for State {
         let mut scoreboard_text =
             graphics::Text::new(format!("{} \t {}", self.l_score, self.r_score));
         scoreboard_text.set_font(graphics::Font::default(), graphics::Scale::uniform(24.0));
-        let coords = Point2 {
+        let score_coords = Point2 {
             x: SCREEN_WIDTH / 2.0 - scoreboard_text.width(ctx) as f32 / 2.0,
             y: 10.0,
         };
-        let params = graphics::DrawParam::default().dest(coords);
+        let score_params = graphics::DrawParam::default().dest(score_coords);
+
+        // FPS display.
+        let mut fps = graphics::Text::new(format!("{:.0}", ggez::timer::fps(ctx)));
+        fps.set_font(graphics::Font::default(), graphics::Scale::uniform(24.0));
+        let fps_coords = Point2 {
+            x: SCREEN_WIDTH / 2.0 - fps.width(ctx) as f32 / 2.0,
+            y: SCREEN_HEIGHT - 24.0,
+        };
+        let fps_params = graphics::DrawParam::default().dest(fps_coords);
 
         graphics::clear(ctx, Color::new(0.0, 0.0, 0.0, 1.0));
         graphics::draw(ctx, &ball_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &l_paddle_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &r_paddle_mesh, graphics::DrawParam::default())?;
-        graphics::draw(ctx, &scoreboard_text, params)?;
+        graphics::draw(ctx, &scoreboard_text, score_params)?;
+        graphics::draw(ctx, &fps, fps_params)?;
         graphics::present(ctx) // Handle error better?
     }
 }
