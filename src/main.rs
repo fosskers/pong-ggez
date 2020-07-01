@@ -1,7 +1,10 @@
 use ggez::conf::WindowMode;
 use ggez::event::EventHandler;
 use ggez::graphics::{self, Color, Rect};
+use ggez::input::keyboard::{self, KeyCode};
 use ggez::{Context, ContextBuilder, GameResult};
+use rand::prelude::ThreadRng;
+use rand::Rng;
 
 type Vector = ggez::mint::Vector2<f32>;
 
@@ -11,12 +14,41 @@ const SCREEN_WIDTH: f32 = 600.0;
 const X_OFFSET: f32 = 20.0; // distance from each paddle to their respective walls
 const PADDLE_WIDTH: f32 = 12.0;
 const PADDLE_HEIGHT: f32 = 75.0;
+const PADDLE_SPEED: f32 = 8.0;
 
 const BALL_RADIUS: f32 = 10.0;
+const MIN_VEL: f32 = 3.0;
+const MAX_VEL: f32 = 5.0;
 
 struct Ball {
     rect: Rect,
     vel: Vector,
+}
+
+impl Ball {
+    fn new() -> Self {
+        let mut rng = rand::thread_rng();
+        let x_vel = Ball::rand_velocity(&mut rng);
+        let y_vel = Ball::rand_velocity(&mut rng);
+
+        Ball {
+            rect: Rect::new(
+                SCREEN_WIDTH / 2.0 - BALL_RADIUS / 2.0,
+                SCREEN_HEIGHT / 2.0 - BALL_RADIUS / 2.0,
+                BALL_RADIUS,
+                BALL_RADIUS,
+            ),
+            vel: Vector { x: x_vel, y: y_vel },
+        }
+    }
+
+    fn rand_velocity(rng: &mut ThreadRng) -> f32 {
+        if rng.gen::<bool>() {
+            rng.gen_range(MIN_VEL, MAX_VEL) * -1.0
+        } else {
+            rng.gen_range(MIN_VEL, MAX_VEL)
+        }
+    }
 }
 
 struct State {
@@ -28,7 +60,7 @@ struct State {
 }
 
 impl State {
-    fn new() -> State {
+    fn new() -> Self {
         State {
             l_paddle: Rect::new(
                 X_OFFSET,
@@ -42,15 +74,7 @@ impl State {
                 PADDLE_WIDTH,
                 PADDLE_HEIGHT,
             ),
-            ball: Ball {
-                rect: Rect::new(
-                    SCREEN_WIDTH / 2.0 - BALL_RADIUS / 2.0,
-                    SCREEN_HEIGHT / 2.0 - BALL_RADIUS / 2.0,
-                    BALL_RADIUS,
-                    BALL_RADIUS,
-                ),
-                vel: Vector { x: 0.0, y: 0.0 },
-            },
+            ball: Ball::new(),
             l_score: 0,
             r_score: 0,
         }
@@ -59,6 +83,43 @@ impl State {
 
 impl EventHandler for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
+        // Move the paddles.
+        if keyboard::is_key_pressed(ctx, KeyCode::W) {
+            self.l_paddle.y -= PADDLE_SPEED;
+        }
+        if keyboard::is_key_pressed(ctx, KeyCode::R) {
+            self.l_paddle.y += PADDLE_SPEED;
+        }
+        if keyboard::is_key_pressed(ctx, KeyCode::Up) {
+            self.r_paddle.y -= PADDLE_SPEED;
+        }
+        if keyboard::is_key_pressed(ctx, KeyCode::Down) {
+            self.r_paddle.y += PADDLE_SPEED;
+        }
+
+        // Move the ball.
+        if (self.ball.vel.x < 0.0 && self.ball.rect.overlaps(&self.l_paddle))
+            || (self.ball.vel.x > 0.0 && self.ball.rect.overlaps(&self.r_paddle))
+        {
+            self.ball.vel.x *= -1.0;
+        }
+        if (self.ball.vel.y < 0.0 && self.ball.rect.top() < 0.0)
+            || (self.ball.vel.y > 0.0 && self.ball.rect.bottom() > SCREEN_HEIGHT)
+        {
+            self.ball.vel.y *= -1.0;
+        }
+        self.ball.rect.translate(self.ball.vel);
+
+        // Check for a goal.
+        if self.ball.rect.left() < 0.0 {
+            self.r_score += 1;
+            self.ball = Ball::new();
+        }
+        if self.ball.rect.right() > SCREEN_WIDTH {
+            self.l_score += 1;
+            self.ball = Ball::new();
+        }
+
         Ok(())
     }
 
