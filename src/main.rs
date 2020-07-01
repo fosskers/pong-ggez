@@ -92,7 +92,7 @@ impl State {
                 PADDLE_HEIGHT,
             ),
             r_paddle: Rect::new(
-                SCREEN_WIDTH - X_OFFSET,
+                SCREEN_WIDTH - (X_OFFSET + PADDLE_WIDTH),
                 SCREEN_HEIGHT / 2.0 - PADDLE_HEIGHT / 2.0,
                 PADDLE_WIDTH,
                 PADDLE_HEIGHT,
