@@ -177,11 +177,20 @@ impl EventHandler for State {
         }
 
         // Move the ball.
-        if (self.ball.vel.x < 0.0 && self.ball.rect.overlaps(&self.l_paddle))
-            || (self.ball.vel.x > 0.0 && self.ball.rect.overlaps(&self.r_paddle))
-        {
+        // Did it hit a paddle?
+        if self.ball.vel.x < 0.0 && self.ball.rect.overlaps(&self.l_paddle) {
             self.ball.vel.x *= -1.0;
+            if above_centre(&self.ball.rect, &self.l_paddle) {
+                self.ball.vel.y *= -1.0;
+            }
         }
+        if self.ball.vel.x > 0.0 && self.ball.rect.overlaps(&self.r_paddle) {
+            self.ball.vel.x *= -1.0;
+            if above_centre(&self.ball.rect, &self.r_paddle) {
+                self.ball.vel.y *= -1.0;
+            }
+        }
+        // Did it hit the top of bottom of the screen?
         if (self.ball.vel.y < 0.0 && self.ball.rect.top() < 0.0)
             || (self.ball.vel.y > 0.0 && self.ball.rect.bottom() > SCREEN_HEIGHT)
         {
@@ -241,6 +250,13 @@ fn rect_mesh(ctx: &mut Context, rect: &Rect) -> Result<graphics::Mesh, GameError
         *rect,
         Color::new(1.0, 1.0, 1.0, 1.0),
     )
+}
+
+fn above_centre(ball: &Rect, paddle: &Rect) -> bool {
+    let ball_centre = (ball.top() + ball.bottom()) / 2.0;
+    let paddle_centre = (paddle.top() + paddle.bottom()) / 2.0;
+
+    ball_centre < paddle_centre
 }
 
 fn main() -> GameResult {
