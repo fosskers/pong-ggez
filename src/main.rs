@@ -74,7 +74,7 @@ struct State {
     ball: Ball,
     l_score: u32,
     r_score: u32,
-    // score_text: graphics::Text,
+    score_text: (graphics::Text, graphics::DrawParam),
     fps: FPS,
     fps_text: (graphics::Text, graphics::DrawParam),
 }
@@ -100,10 +100,27 @@ impl State {
             ball: Ball::new(),
             l_score: 0,
             r_score: 0,
-            // score_text: todo!(),
+            score_text: State::score(ctx, 0, 0),
             fps,
             fps_text,
         }
+    }
+
+    fn score(
+        ctx: &mut Context,
+        l_score: u32,
+        r_score: u32,
+    ) -> (graphics::Text, graphics::DrawParam) {
+        let mut scoreboard_text = graphics::Text::new(format!("{} \t {}", l_score, r_score));
+        scoreboard_text.set_font(graphics::Font::default(), graphics::Scale::uniform(24.0));
+
+        let score_coords = Point2 {
+            x: SCREEN_WIDTH / 2.0 - scoreboard_text.width(ctx) as f32 / 2.0,
+            y: 10.0,
+        };
+        let score_params = graphics::DrawParam::default().dest(score_coords);
+
+        (scoreboard_text, score_params)
     }
 }
 
@@ -140,9 +157,11 @@ impl EventHandler for State {
         if self.ball.rect.left() < 0.0 {
             self.r_score += 1;
             self.ball = Ball::new();
+            self.score_text = State::score(ctx, self.l_score, self.r_score);
         } else if self.ball.rect.right() > SCREEN_WIDTH {
             self.l_score += 1;
             self.ball = Ball::new();
+            self.score_text = State::score(ctx, self.l_score, self.r_score);
         }
 
         // FPS updates.
@@ -177,22 +196,11 @@ impl EventHandler for State {
             Color::new(1.0, 1.0, 1.0, 1.0),
         )?;
 
-        // Scoreboard.
-        // TODO Avoid doing `new` every frame.
-        let mut scoreboard_text =
-            graphics::Text::new(format!("{} \t {}", self.l_score, self.r_score));
-        scoreboard_text.set_font(graphics::Font::default(), graphics::Scale::uniform(24.0));
-        let score_coords = Point2 {
-            x: SCREEN_WIDTH / 2.0 - scoreboard_text.width(ctx) as f32 / 2.0,
-            y: 10.0,
-        };
-        let score_params = graphics::DrawParam::default().dest(score_coords);
-
         graphics::clear(ctx, Color::new(0.0, 0.0, 0.0, 1.0));
         graphics::draw(ctx, &ball_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &l_paddle_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &r_paddle_mesh, graphics::DrawParam::default())?;
-        graphics::draw(ctx, &scoreboard_text, score_params)?;
+        graphics::draw(ctx, &self.score_text.0, self.score_text.1)?;
         graphics::draw(ctx, &self.fps_text.0, self.fps_text.1)?;
         graphics::present(ctx) // Handle error better?
     }
