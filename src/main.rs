@@ -20,6 +20,31 @@ const PADDLE_SPEED: f32 = 8.0;
 const BALL_RADIUS: f32 = 10.0;
 const MIN_VEL: f32 = 3.0;
 const MAX_VEL: f32 = 5.0;
+const TRAIL_RATE: u32 = 7;
+
+/// A piece of a short trail that follows the `Ball`.
+struct Trail {
+    rect: Rect,
+}
+
+impl Trail {
+    /// A new `Trail` piece at the centre of the screen.
+    fn new() -> Self {
+        let x = SCREEN_WIDTH / 2.0 - BALL_RADIUS / 2.0;
+        let y = SCREEN_HEIGHT / 2.0 - BALL_RADIUS / 2.0;
+
+        Trail {
+            rect: Rect::new(x, y, BALL_RADIUS / 4.0, BALL_RADIUS / 4.0),
+        }
+    }
+
+    fn move_to(&mut self, rect: &Rect) {
+        self.rect.move_to(Point2 {
+            x: rect.x,
+            y: rect.y,
+        })
+    }
+}
 
 struct Ball {
     rect: Rect,
@@ -31,14 +56,11 @@ impl Ball {
         let mut rng = rand::thread_rng();
         let x_vel = Ball::rand_velocity(&mut rng);
         let y_vel = Ball::rand_velocity(&mut rng);
+        let x = SCREEN_WIDTH / 2.0 - BALL_RADIUS / 2.0;
+        let y = SCREEN_HEIGHT / 2.0 - BALL_RADIUS / 2.0;
 
         Ball {
-            rect: Rect::new(
-                SCREEN_WIDTH / 2.0 - BALL_RADIUS / 2.0,
-                SCREEN_HEIGHT / 2.0 - BALL_RADIUS / 2.0,
-                BALL_RADIUS,
-                BALL_RADIUS,
-            ),
+            rect: Rect::new(x, y, BALL_RADIUS, BALL_RADIUS),
             vel: Vector { x: x_vel, y: y_vel },
         }
     }
@@ -56,11 +78,16 @@ struct State {
     l_paddle: Rect,
     r_paddle: Rect,
     ball: Ball,
+    trail_0: Trail,
+    trail_1: Trail,
+    trail_2: Trail,
+    trail_3: Trail,
     l_score: u32,
     r_score: u32,
     score_text: (graphics::Text, graphics::DrawParam),
     fps: u32,
     fps_text: (graphics::Text, graphics::DrawParam),
+    frame: u32,
 }
 
 impl State {
@@ -79,11 +106,16 @@ impl State {
                 PADDLE_HEIGHT,
             ),
             ball: Ball::new(),
+            trail_0: Trail::new(),
+            trail_1: Trail::new(),
+            trail_2: Trail::new(),
+            trail_3: Trail::new(),
             l_score: 0,
             r_score: 0,
             score_text: State::new_score(ctx, 0, 0),
             fps: 0,
             fps_text: State::new_fps(ctx),
+            frame: 0,
         }
     }
 
@@ -119,6 +151,17 @@ impl State {
 
 impl EventHandler for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
+        // Bump the frame count.
+        self.frame += 1;
+
+        // Update the `Trail` pieces, if necessary.
+        if self.frame % TRAIL_RATE == 0 {
+            self.trail_3.move_to(&self.trail_2.rect);
+            self.trail_2.move_to(&self.trail_1.rect);
+            self.trail_1.move_to(&self.trail_0.rect);
+            self.trail_0.move_to(&self.ball.rect);
+        }
+
         // Move the paddles.
         if keyboard::is_key_pressed(ctx, KeyCode::W) && self.l_paddle.top() > 0.0 {
             self.l_paddle.y -= PADDLE_SPEED;
@@ -168,6 +211,29 @@ impl EventHandler for State {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
+        graphics::clear(ctx, Color::new(0.0, 0.0, 0.0, 1.0));
+
+        let trail_1_mesh = graphics::Mesh::new_rectangle(
+            ctx,
+            graphics::DrawMode::fill(),
+            self.trail_1.rect,
+            Color::new(1.0, 1.0, 1.0, 1.0),
+        )?;
+
+        let trail_2_mesh = graphics::Mesh::new_rectangle(
+            ctx,
+            graphics::DrawMode::fill(),
+            self.trail_2.rect,
+            Color::new(1.0, 1.0, 1.0, 1.0),
+        )?;
+
+        let trail_3_mesh = graphics::Mesh::new_rectangle(
+            ctx,
+            graphics::DrawMode::fill(),
+            self.trail_3.rect,
+            Color::new(1.0, 1.0, 1.0, 1.0),
+        )?;
+
         let ball_mesh = graphics::Mesh::new_rectangle(
             ctx,
             graphics::DrawMode::fill(),
@@ -189,8 +255,10 @@ impl EventHandler for State {
             Color::new(1.0, 1.0, 1.0, 1.0),
         )?;
 
-        graphics::clear(ctx, Color::new(0.0, 0.0, 0.0, 1.0));
         graphics::draw(ctx, &ball_mesh, graphics::DrawParam::default())?;
+        graphics::draw(ctx, &trail_1_mesh, graphics::DrawParam::default())?;
+        graphics::draw(ctx, &trail_2_mesh, graphics::DrawParam::default())?;
+        graphics::draw(ctx, &trail_3_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &l_paddle_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &r_paddle_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &self.score_text.0, self.score_text.1)?;
