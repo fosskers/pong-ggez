@@ -127,16 +127,16 @@ impl State {
 impl EventHandler for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         // Move the paddles.
-        if keyboard::is_key_pressed(ctx, KeyCode::W) {
+        if keyboard::is_key_pressed(ctx, KeyCode::W) && self.l_paddle.top() > 0.0 {
             self.l_paddle.y -= PADDLE_SPEED;
         }
-        if keyboard::is_key_pressed(ctx, KeyCode::R) {
+        if keyboard::is_key_pressed(ctx, KeyCode::R) && self.l_paddle.bottom() < SCREEN_HEIGHT {
             self.l_paddle.y += PADDLE_SPEED;
         }
-        if keyboard::is_key_pressed(ctx, KeyCode::Up) {
+        if keyboard::is_key_pressed(ctx, KeyCode::Up) && self.r_paddle.top() > 0.0 {
             self.r_paddle.y -= PADDLE_SPEED;
         }
-        if keyboard::is_key_pressed(ctx, KeyCode::Down) {
+        if keyboard::is_key_pressed(ctx, KeyCode::Down) && self.r_paddle.bottom() < SCREEN_HEIGHT {
             self.r_paddle.y += PADDLE_SPEED;
         }
 
