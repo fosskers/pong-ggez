@@ -2,6 +2,7 @@ use ggez::conf::WindowMode;
 use ggez::event::EventHandler;
 use ggez::graphics::{self, Color, Rect};
 use ggez::input::keyboard::{self, KeyCode};
+use ggez::mint::Point2;
 use ggez::{Context, ContextBuilder, GameResult};
 use rand::prelude::ThreadRng;
 use rand::Rng;
@@ -114,8 +115,7 @@ impl EventHandler for State {
         if self.ball.rect.left() < 0.0 {
             self.r_score += 1;
             self.ball = Ball::new();
-        }
-        if self.ball.rect.right() > SCREEN_WIDTH {
+        } else if self.ball.rect.right() > SCREEN_WIDTH {
             self.l_score += 1;
             self.ball = Ball::new();
         }
@@ -145,10 +145,22 @@ impl EventHandler for State {
             Color::new(1.0, 1.0, 1.0, 1.0),
         )?;
 
+        // Scoreboard.
+        // TODO Avoid doing `new` every frame.
+        let mut scoreboard_text =
+            graphics::Text::new(format!("{} \t {}", self.l_score, self.r_score));
+        scoreboard_text.set_font(graphics::Font::default(), graphics::Scale::uniform(24.0));
+        let coords = Point2 {
+            x: SCREEN_WIDTH / 2.0 - scoreboard_text.width(ctx) as f32 / 2.0,
+            y: 10.0,
+        };
+        let params = graphics::DrawParam::default().dest(coords);
+
         graphics::clear(ctx, Color::new(0.0, 0.0, 0.0, 1.0));
         graphics::draw(ctx, &ball_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &l_paddle_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &r_paddle_mesh, graphics::DrawParam::default())?;
+        graphics::draw(ctx, &scoreboard_text, params)?;
         graphics::present(ctx) // Handle error better?
     }
 }
