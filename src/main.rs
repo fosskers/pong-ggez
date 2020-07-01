@@ -21,6 +21,22 @@ const BALL_RADIUS: f32 = 10.0;
 const MIN_VEL: f32 = 3.0;
 const MAX_VEL: f32 = 5.0;
 
+struct FPS(u32);
+
+impl FPS {
+    fn as_text(&self, ctx: &mut Context) -> (graphics::Text, graphics::DrawParam) {
+        let mut fps = graphics::Text::new(format!("{:.0}", ggez::timer::fps(ctx)));
+        fps.set_font(graphics::Font::default(), graphics::Scale::uniform(24.0));
+        let fps_coords = Point2 {
+            x: SCREEN_WIDTH / 2.0 - fps.width(ctx) as f32 / 2.0,
+            y: SCREEN_HEIGHT - 24.0,
+        };
+        let fps_params = graphics::DrawParam::default().dest(fps_coords);
+
+        (fps, fps_params)
+    }
+}
+
 struct Ball {
     rect: Rect,
     vel: Vector,
@@ -58,10 +74,16 @@ struct State {
     ball: Ball,
     l_score: u32,
     r_score: u32,
+    // score_text: graphics::Text,
+    fps: FPS,
+    fps_text: (graphics::Text, graphics::DrawParam),
 }
 
 impl State {
-    fn new() -> Self {
+    fn new(ctx: &mut Context) -> Self {
+        let fps = FPS(0);
+        let fps_text = fps.as_text(ctx);
+
         State {
             l_paddle: Rect::new(
                 X_OFFSET,
@@ -78,6 +100,9 @@ impl State {
             ball: Ball::new(),
             l_score: 0,
             r_score: 0,
+            // score_text: todo!(),
+            fps,
+            fps_text,
         }
     }
 }
@@ -120,6 +145,13 @@ impl EventHandler for State {
             self.ball = Ball::new();
         }
 
+        // FPS updates.
+        let fps = ggez::timer::fps(ctx) as u32;
+        if fps != self.fps.0 {
+            self.fps = FPS(fps);
+            self.fps_text = self.fps.as_text(ctx);
+        }
+
         Ok(())
     }
 
@@ -156,21 +188,12 @@ impl EventHandler for State {
         };
         let score_params = graphics::DrawParam::default().dest(score_coords);
 
-        // FPS display.
-        let mut fps = graphics::Text::new(format!("{:.0}", ggez::timer::fps(ctx)));
-        fps.set_font(graphics::Font::default(), graphics::Scale::uniform(24.0));
-        let fps_coords = Point2 {
-            x: SCREEN_WIDTH / 2.0 - fps.width(ctx) as f32 / 2.0,
-            y: SCREEN_HEIGHT - 24.0,
-        };
-        let fps_params = graphics::DrawParam::default().dest(fps_coords);
-
         graphics::clear(ctx, Color::new(0.0, 0.0, 0.0, 1.0));
         graphics::draw(ctx, &ball_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &l_paddle_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &r_paddle_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &scoreboard_text, score_params)?;
-        graphics::draw(ctx, &fps, fps_params)?;
+        graphics::draw(ctx, &self.fps_text.0, self.fps_text.1)?;
         graphics::present(ctx) // Handle error better?
     }
 }
@@ -179,6 +202,6 @@ fn main() -> GameResult {
     let (mut ctx, mut event_loop) = ContextBuilder::new("Pong", "Colin Woodbury")
         .window_mode(WindowMode::default().dimensions(SCREEN_WIDTH, SCREEN_HEIGHT))
         .build()?;
-    let mut state = State::new();
+    let mut state = State::new(&mut ctx);
     ggez::event::run(&mut ctx, &mut event_loop, &mut state)
 }
