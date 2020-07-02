@@ -1,7 +1,7 @@
 use ggez::audio::{SoundSource, Source};
 use ggez::conf::{WindowMode, WindowSetup};
 use ggez::event::EventHandler;
-use ggez::graphics::{self, Rect};
+use ggez::graphics::{self, Color, Rect};
 use ggez::input::keyboard::{self, KeyCode};
 use ggez::mint::Point2;
 use ggez::{Context, ContextBuilder, GameResult};
@@ -20,6 +20,27 @@ const PADDLE_SPEED: f32 = 8.0;
 const BALL_RADIUS: f32 = 10.0;
 const MIN_VEL: f32 = 3.0;
 const TRAIL_RATE: u32 = 7;
+
+const GREEN: Color = Color {
+    r: 0.0,
+    g: 1.0,
+    b: 0.0,
+    a: 1.0,
+};
+
+const YELLOW: Color = Color {
+    r: 1.0,
+    g: 1.0,
+    b: 0.0,
+    a: 1.0,
+};
+
+const RED: Color = Color {
+    r: 1.0,
+    g: 0.0,
+    b: 0.0,
+    a: 1.0,
+};
 
 /// A piece of a short trail that follows the `Ball`.
 struct Trail {
@@ -67,6 +88,17 @@ impl Ball {
     fn rand_velocity(frame: u32) -> f32 {
         let sign = if frame % 2 == 0 { 1.0 } else { -1.0 };
         (((frame % 200) as f32 * 0.01) + MIN_VEL) * sign
+    }
+
+    fn colour(&self) -> Color {
+        let x_vel = self.vel.x.abs();
+        if x_vel > 6.0 {
+            RED
+        } else if x_vel > 4.5 {
+            YELLOW
+        } else {
+            GREEN
+        }
     }
 }
 
@@ -209,14 +241,14 @@ impl EventHandler for State {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, graphics::BLACK);
 
-        let trail_1_mesh = rect_mesh(ctx, &self.trail_1.rect)?;
-        let trail_2_mesh = rect_mesh(ctx, &self.trail_2.rect)?;
-        let trail_3_mesh = rect_mesh(ctx, &self.trail_3.rect)?;
+        let trail_1_mesh = rect_mesh(ctx, &self.trail_1.rect, None)?;
+        let trail_2_mesh = rect_mesh(ctx, &self.trail_2.rect, None)?;
+        let trail_3_mesh = rect_mesh(ctx, &self.trail_3.rect, None)?;
 
-        let ball_mesh = rect_mesh(ctx, &self.ball.rect)?;
+        let ball_mesh = rect_mesh(ctx, &self.ball.rect, Some(self.ball.colour()))?;
 
-        let l_paddle_mesh = rect_mesh(ctx, &self.l_paddle)?;
-        let r_paddle_mesh = rect_mesh(ctx, &self.r_paddle)?;
+        let l_paddle_mesh = rect_mesh(ctx, &self.l_paddle, None)?;
+        let r_paddle_mesh = rect_mesh(ctx, &self.r_paddle, None)?;
 
         // Draw all the text.
         let score_coords = Point2 {
@@ -246,8 +278,13 @@ impl EventHandler for State {
     }
 }
 
-fn rect_mesh(ctx: &mut Context, rect: &Rect) -> GameResult<graphics::Mesh> {
-    graphics::Mesh::new_rectangle(ctx, graphics::DrawMode::fill(), *rect, graphics::WHITE)
+fn rect_mesh(
+    ctx: &mut Context,
+    rect: &Rect,
+    colour: Option<graphics::Color>,
+) -> GameResult<graphics::Mesh> {
+    let c = colour.unwrap_or(graphics::WHITE);
+    graphics::Mesh::new_rectangle(ctx, graphics::DrawMode::fill(), *rect, c)
 }
 
 fn above_centre(ball: &Rect, paddle: &Rect) -> bool {
