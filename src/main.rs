@@ -1,5 +1,5 @@
 use ggez::audio::{SoundSource, Source};
-use ggez::conf::WindowMode;
+use ggez::conf::{WindowMode, WindowSetup};
 use ggez::event::EventHandler;
 use ggez::graphics::{self, Color, Rect};
 use ggez::input::keyboard::{self, KeyCode};
@@ -266,14 +266,12 @@ fn above_centre(ball: &Rect, paddle: &Rect) -> bool {
 fn main() -> anyhow::Result<()> {
     // Register the local project directory as a place to look for assets.
     let resource_dir = env::var("CARGO_MANIFEST_DIR")?;
-
     let (mut ctx, mut event_loop) = ContextBuilder::new("Pong", "Colin Woodbury")
+        .window_setup(WindowSetup::default().title("Pong"))
         .window_mode(WindowMode::default().dimensions(SCREEN_WIDTH, SCREEN_HEIGHT))
         .add_resource_path(resource_dir)
         .build()?;
-
     let mut state = State::new(&mut ctx)?;
-
     let result = ggez::event::run(&mut ctx, &mut event_loop, &mut state)?;
 
     Ok(result)
