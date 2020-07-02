@@ -67,6 +67,21 @@ impl Trail {
             y: rect.y,
         })
     }
+
+    fn mesh(&self, ctx: &mut Context) -> GameResult<graphics::Mesh> {
+        let point = Point2 {
+            x: self.rect.x,
+            y: self.rect.y,
+        };
+        graphics::Mesh::new_circle(
+            ctx,
+            graphics::DrawMode::fill(),
+            point,
+            BALL_RADIUS * 0.2,
+            1.0,
+            graphics::WHITE,
+        )
+    }
 }
 
 struct Ball {
@@ -271,9 +286,12 @@ impl EventHandler for State {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, graphics::BLACK);
 
-        let trail_1_mesh = rect_mesh(ctx, &self.trail_1.rect, None)?;
-        let trail_2_mesh = rect_mesh(ctx, &self.trail_2.rect, None)?;
-        let trail_3_mesh = rect_mesh(ctx, &self.trail_3.rect, None)?;
+        // let trail_1_mesh = rect_mesh(ctx, &self.trail_1.rect, None)?;
+        let trail_1_mesh = self.trail_1.mesh(ctx)?;
+        let trail_2_mesh = self.trail_2.mesh(ctx)?;
+        let trail_3_mesh = self.trail_3.mesh(ctx)?;
+        // let trail_2_mesh = rect_mesh(ctx, &self.trail_2.rect, None)?;
+        // let trail_3_mesh = rect_mesh(ctx, &self.trail_3.rect, None)?;
 
         let ball_mesh = self.ball.mesh(ctx, self.ball.colour())?;
 
