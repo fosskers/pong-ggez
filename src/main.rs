@@ -6,6 +6,7 @@ use ggez::input::keyboard::{self, KeyCode};
 use ggez::mint::Point2;
 use ggez::{Context, ContextBuilder, GameResult};
 use std::env;
+use std::path::PathBuf;
 
 type Vector = ggez::mint::Vector2<f32>;
 
@@ -331,7 +332,9 @@ fn rand_pitch(frame: u32) -> f32 {
 
 fn main() -> anyhow::Result<()> {
     // Register the local project directory as a place to look for assets.
-    let resource_dir = env::var("CARGO_MANIFEST_DIR")?;
+    let mut resource_dir = PathBuf::new();
+    resource_dir.push(env::var("CARGO_MANIFEST_DIR")?);
+    resource_dir.push("sounds");
     let (mut ctx, mut event_loop) = ContextBuilder::new("Pong", "Colin Woodbury")
         .window_setup(WindowSetup::default().title("Pong"))
         .window_mode(WindowMode::default().dimensions(SCREEN_WIDTH, SCREEN_HEIGHT))
