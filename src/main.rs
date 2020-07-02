@@ -80,9 +80,9 @@ struct State {
     trail_3: Trail,
     l_score: u32,
     r_score: u32,
-    score_text: (graphics::Text, graphics::DrawParam),
+    score_text: graphics::Text,
     fps: u32,
-    fps_text: (graphics::Text, graphics::DrawParam),
+    fps_text: graphics::Text,
     frame: u32,
     paddle_sound: Source,
 }
@@ -111,9 +111,9 @@ impl State {
             trail_3: Trail::new(),
             l_score: 0,
             r_score: 0,
-            score_text: State::new_score(ctx, 0, 0),
+            score_text: State::new_score(0, 0),
             fps: 0,
-            fps_text: State::new_fps(ctx),
+            fps_text: State::new_fps(0),
             frame: 0,
             paddle_sound,
         };
@@ -121,33 +121,16 @@ impl State {
         Ok(state)
     }
 
-    fn new_score(
-        ctx: &mut Context,
-        l_score: u32,
-        r_score: u32,
-    ) -> (graphics::Text, graphics::DrawParam) {
+    fn new_score(l_score: u32, r_score: u32) -> graphics::Text {
         let mut scoreboard_text = graphics::Text::new(format!("{} \t {}", l_score, r_score));
         scoreboard_text.set_font(graphics::Font::default(), graphics::Scale::uniform(24.0));
-
-        let score_coords = Point2 {
-            x: SCREEN_WIDTH / 2.0 - scoreboard_text.width(ctx) as f32 / 2.0,
-            y: 10.0,
-        };
-        let score_params = graphics::DrawParam::default().dest(score_coords);
-
-        (scoreboard_text, score_params)
+        scoreboard_text
     }
 
-    fn new_fps(ctx: &mut Context) -> (graphics::Text, graphics::DrawParam) {
-        let mut fps = graphics::Text::new(format!("{:.0}", ggez::timer::fps(ctx)));
+    fn new_fps(fps: u32) -> graphics::Text {
+        let mut fps = graphics::Text::new(format!("{:.0}", fps));
         fps.set_font(graphics::Font::default(), graphics::Scale::uniform(24.0));
-        let fps_coords = Point2 {
-            x: SCREEN_WIDTH / 2.0 - fps.width(ctx) as f32 / 2.0,
-            y: SCREEN_HEIGHT - 24.0,
-        };
-        let fps_params = graphics::DrawParam::default().dest(fps_coords);
-
-        (fps, fps_params)
+        fps
     }
 }
 
@@ -206,18 +189,18 @@ impl EventHandler for State {
         if self.ball.rect.left() < 0.0 {
             self.r_score += 1;
             self.ball = Ball::new(self.frame);
-            self.score_text = State::new_score(ctx, self.l_score, self.r_score);
+            self.score_text = State::new_score(self.l_score, self.r_score);
         } else if self.ball.rect.right() > SCREEN_WIDTH {
             self.l_score += 1;
             self.ball = Ball::new(self.frame);
-            self.score_text = State::new_score(ctx, self.l_score, self.r_score);
+            self.score_text = State::new_score(self.l_score, self.r_score);
         }
 
         // FPS updates.
         let fps = ggez::timer::fps(ctx) as u32;
         if fps != self.fps {
             self.fps = fps;
-            self.fps_text = State::new_fps(ctx);
+            self.fps_text = State::new_fps(fps);
         }
 
         Ok(())
@@ -235,14 +218,30 @@ impl EventHandler for State {
         let l_paddle_mesh = rect_mesh(ctx, &self.l_paddle)?;
         let r_paddle_mesh = rect_mesh(ctx, &self.r_paddle)?;
 
+        // Draw all the text.
+        let score_coords = Point2 {
+            x: SCREEN_WIDTH / 2.0 - self.score_text.width(ctx) as f32 / 2.0,
+            y: 10.0,
+        };
+        let fps_coords = Point2 {
+            x: SCREEN_WIDTH / 2.0 - self.fps_text.width(ctx) as f32 / 2.0,
+            y: SCREEN_HEIGHT - 24.0,
+        };
+        graphics::queue_text(ctx, &self.score_text, score_coords, None);
+        graphics::queue_text(ctx, &self.fps_text, fps_coords, None);
+        graphics::draw_queued_text(
+            ctx,
+            graphics::DrawParam::default(),
+            None,
+            graphics::FilterMode::Linear,
+        )?;
+
         graphics::draw(ctx, &ball_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &trail_1_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &trail_2_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &trail_3_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &l_paddle_mesh, graphics::DrawParam::default())?;
         graphics::draw(ctx, &r_paddle_mesh, graphics::DrawParam::default())?;
-        graphics::draw(ctx, &self.score_text.0, self.score_text.1)?;
-        graphics::draw(ctx, &self.fps_text.0, self.fps_text.1)?;
         graphics::present(ctx) // Handle error better?
     }
 }
