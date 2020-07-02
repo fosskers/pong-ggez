@@ -134,11 +134,17 @@ struct State {
     fps_text: graphics::Text,
     frame: u32,
     paddle_sound: Source,
+    l_score_sound: Source,
+    r_score_sound: Source,
 }
 
 impl State {
     fn new(ctx: &mut Context) -> GameResult<Self> {
         let paddle_sound = Source::new(ctx, "/racket.mp3")?;
+        let mut l_score_sound = Source::new(ctx, "/score.mp3")?;
+        let mut r_score_sound = Source::new(ctx, "/score2.mp3")?;
+        l_score_sound.set_volume(0.2);
+        r_score_sound.set_volume(0.2);
 
         let state = State {
             l_paddle: Rect::new(
@@ -165,6 +171,8 @@ impl State {
             fps_text: State::new_fps(0),
             frame: 0,
             paddle_sound,
+            l_score_sound,
+            r_score_sound,
         };
 
         Ok(state)
@@ -241,10 +249,12 @@ impl EventHandler for State {
             self.r_score += 1;
             self.ball = Ball::new(self.frame);
             self.score_text = State::new_score(self.l_score, self.r_score);
+            self.r_score_sound.play()?;
         } else if self.ball.rect.right() > SCREEN_WIDTH {
             self.l_score += 1;
             self.ball = Ball::new(self.frame);
             self.score_text = State::new_score(self.l_score, self.r_score);
+            self.l_score_sound.play()?;
         }
 
         // FPS updates.
