@@ -4,8 +4,6 @@ use ggez::graphics::{self, Color, Rect};
 use ggez::input::keyboard::{self, KeyCode};
 use ggez::mint::Point2;
 use ggez::{Context, ContextBuilder, GameError, GameResult};
-use rand::prelude::ThreadRng;
-use rand::Rng;
 
 type Vector = ggez::mint::Vector2<f32>;
 
@@ -19,7 +17,6 @@ const PADDLE_SPEED: f32 = 8.0;
 
 const BALL_RADIUS: f32 = 10.0;
 const MIN_VEL: f32 = 3.0;
-const MAX_VEL: f32 = 5.0;
 const TRAIL_RATE: u32 = 7;
 
 /// A piece of a short trail that follows the `Ball`.
@@ -52,10 +49,9 @@ struct Ball {
 }
 
 impl Ball {
-    fn new() -> Self {
-        let mut rng = rand::thread_rng();
-        let x_vel = Ball::rand_velocity(&mut rng);
-        let y_vel = Ball::rand_velocity(&mut rng);
+    fn new(frame: u32) -> Self {
+        let x_vel = Ball::rand_velocity(frame);
+        let y_vel = Ball::rand_velocity(frame % 17);
         let x = SCREEN_WIDTH / 2.0 - BALL_RADIUS / 2.0;
         let y = SCREEN_HEIGHT / 2.0 - BALL_RADIUS / 2.0;
 
@@ -65,12 +61,10 @@ impl Ball {
         }
     }
 
-    fn rand_velocity(rng: &mut ThreadRng) -> f32 {
-        if rng.gen::<bool>() {
-            rng.gen_range(MIN_VEL, MAX_VEL) * -1.0
-        } else {
-            rng.gen_range(MIN_VEL, MAX_VEL)
-        }
+    /// Pseudo-randomness based on the current frame.
+    fn rand_velocity(frame: u32) -> f32 {
+        let sign = if frame % 2 == 0 { 1.0 } else { -1.0 };
+        (((frame % 200) as f32 * 0.01) + MIN_VEL) * sign
     }
 }
 
@@ -105,7 +99,7 @@ impl State {
                 PADDLE_WIDTH,
                 PADDLE_HEIGHT,
             ),
-            ball: Ball::new(),
+            ball: Ball::new(0),
             trail_0: Trail::new(),
             trail_1: Trail::new(),
             trail_2: Trail::new(),
@@ -201,11 +195,11 @@ impl EventHandler for State {
         // Check for a goal.
         if self.ball.rect.left() < 0.0 {
             self.r_score += 1;
-            self.ball = Ball::new();
+            self.ball = Ball::new(self.frame);
             self.score_text = State::new_score(ctx, self.l_score, self.r_score);
         } else if self.ball.rect.right() > SCREEN_WIDTH {
             self.l_score += 1;
-            self.ball = Ball::new();
+            self.ball = Ball::new(self.frame);
             self.score_text = State::new_score(ctx, self.l_score, self.r_score);
         }
 
