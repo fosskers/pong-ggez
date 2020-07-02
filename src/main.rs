@@ -21,6 +21,8 @@ const BALL_RADIUS: f32 = 10.0;
 const MIN_VEL: f32 = 3.0;
 const TRAIL_RATE: u32 = 7;
 
+const NORMAL_PITCH: f32 = 1.0;
+
 const GREEN: Color = Color {
     r: 0.0,
     g: 1.0,
@@ -200,6 +202,7 @@ impl EventHandler for State {
             if above_centre(&self.ball.rect, &self.l_paddle) {
                 self.ball.vel.y *= -1.0;
             }
+            self.paddle_sound.set_pitch(rand_pitch(self.frame));
             self.paddle_sound.play()?;
         }
         if self.ball.vel.x > 0.0 && self.ball.rect.overlaps(&self.r_paddle) {
@@ -207,6 +210,7 @@ impl EventHandler for State {
             if above_centre(&self.ball.rect, &self.r_paddle) {
                 self.ball.vel.y *= -1.0;
             }
+            self.paddle_sound.set_pitch(rand_pitch(self.frame));
             self.paddle_sound.play()?;
         }
         // Did it hit the top of bottom of the screen?
@@ -292,6 +296,12 @@ fn above_centre(ball: &Rect, paddle: &Rect) -> bool {
     let paddle_centre = (paddle.top() + paddle.bottom()) / 2.0;
 
     ball_centre < paddle_centre
+}
+
+/// Pseudo-randomness based on the current frame.
+fn rand_pitch(frame: u32) -> f32 {
+    let sign = if frame % 2 == 0 { 1.0 } else { -1.0 };
+    (((frame % 20) as f32 * 0.01) * sign) + NORMAL_PITCH
 }
 
 fn main() -> anyhow::Result<()> {
