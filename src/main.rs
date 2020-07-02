@@ -1,9 +1,11 @@
+use ggez::audio::{SoundSource, Source};
 use ggez::conf::WindowMode;
 use ggez::event::EventHandler;
 use ggez::graphics::{self, Color, Rect};
 use ggez::input::keyboard::{self, KeyCode};
 use ggez::mint::Point2;
-use ggez::{Context, ContextBuilder, GameError, GameResult};
+use ggez::{Context, ContextBuilder, GameResult};
+use std::path::Path;
 
 type Vector = ggez::mint::Vector2<f32>;
 
@@ -82,11 +84,22 @@ struct State {
     fps: u32,
     fps_text: (graphics::Text, graphics::DrawParam),
     frame: u32,
+    paddle_sound: Source,
 }
 
 impl State {
-    fn new(ctx: &mut Context) -> Self {
-        State {
+    fn new(ctx: &mut Context) -> GameResult<Self> {
+        let path = Path::new("/racket.mp3");
+
+        if path.is_file() {
+            println!("YES!");
+        } else {
+            println!("WHY!?");
+        }
+
+        let paddle_sound = Source::new(ctx, path)?;
+
+        let state = State {
             l_paddle: Rect::new(
                 X_OFFSET,
                 SCREEN_HEIGHT / 2.0 - PADDLE_HEIGHT / 2.0,
@@ -110,7 +123,10 @@ impl State {
             fps: 0,
             fps_text: State::new_fps(ctx),
             frame: 0,
-        }
+            paddle_sound,
+        };
+
+        Ok(state)
     }
 
     fn new_score(
@@ -177,12 +193,14 @@ impl EventHandler for State {
             if above_centre(&self.ball.rect, &self.l_paddle) {
                 self.ball.vel.y *= -1.0;
             }
+            self.paddle_sound.play()?;
         }
         if self.ball.vel.x > 0.0 && self.ball.rect.overlaps(&self.r_paddle) {
             self.ball.vel.x *= -1.0;
             if above_centre(&self.ball.rect, &self.r_paddle) {
                 self.ball.vel.y *= -1.0;
             }
+            self.paddle_sound.play()?;
         }
         // Did it hit the top of bottom of the screen?
         if (self.ball.vel.y < 0.0 && self.ball.rect.top() < 0.0)
@@ -237,7 +255,7 @@ impl EventHandler for State {
     }
 }
 
-fn rect_mesh(ctx: &mut Context, rect: &Rect) -> Result<graphics::Mesh, GameError> {
+fn rect_mesh(ctx: &mut Context, rect: &Rect) -> GameResult<graphics::Mesh> {
     graphics::Mesh::new_rectangle(
         ctx,
         graphics::DrawMode::fill(),
@@ -257,6 +275,6 @@ fn main() -> GameResult {
     let (mut ctx, mut event_loop) = ContextBuilder::new("Pong", "Colin Woodbury")
         .window_mode(WindowMode::default().dimensions(SCREEN_WIDTH, SCREEN_HEIGHT))
         .build()?;
-    let mut state = State::new(&mut ctx);
+    let mut state = State::new(&mut ctx)?;
     ggez::event::run(&mut ctx, &mut event_loop, &mut state)
 }
