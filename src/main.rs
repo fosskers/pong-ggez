@@ -1,7 +1,7 @@
 use ggez::audio::{SoundSource, Source};
 use ggez::conf::{WindowMode, WindowSetup};
 use ggez::event::EventHandler;
-use ggez::graphics::{self, Color, Rect};
+use ggez::graphics::{self, Rect};
 use ggez::input::keyboard::{self, KeyCode};
 use ggez::mint::Point2;
 use ggez::{Context, ContextBuilder, GameResult};
@@ -224,7 +224,7 @@ impl EventHandler for State {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        graphics::clear(ctx, Color::new(0.0, 0.0, 0.0, 1.0));
+        graphics::clear(ctx, graphics::BLACK);
 
         let trail_1_mesh = rect_mesh(ctx, &self.trail_1.rect)?;
         let trail_2_mesh = rect_mesh(ctx, &self.trail_2.rect)?;
@@ -248,12 +248,7 @@ impl EventHandler for State {
 }
 
 fn rect_mesh(ctx: &mut Context, rect: &Rect) -> GameResult<graphics::Mesh> {
-    graphics::Mesh::new_rectangle(
-        ctx,
-        graphics::DrawMode::fill(),
-        *rect,
-        Color::new(1.0, 1.0, 1.0, 1.0),
-    )
+    graphics::Mesh::new_rectangle(ctx, graphics::DrawMode::fill(), *rect, graphics::WHITE)
 }
 
 fn above_centre(ball: &Rect, paddle: &Rect) -> bool {
