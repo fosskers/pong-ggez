@@ -5,7 +5,7 @@ use ggez::graphics::{self, Color, Rect};
 use ggez::input::keyboard::{self, KeyCode};
 use ggez::mint::Point2;
 use ggez::{Context, ContextBuilder, GameResult};
-use std::path::Path;
+use std::env;
 
 type Vector = ggez::mint::Vector2<f32>;
 
@@ -89,15 +89,7 @@ struct State {
 
 impl State {
     fn new(ctx: &mut Context) -> GameResult<Self> {
-        let path = Path::new("/racket.mp3");
-
-        if path.is_file() {
-            println!("YES!");
-        } else {
-            println!("WHY!?");
-        }
-
-        let paddle_sound = Source::new(ctx, path)?;
+        let paddle_sound = Source::new(ctx, "/racket.mp3")?;
 
         let state = State {
             l_paddle: Rect::new(
@@ -271,10 +263,18 @@ fn above_centre(ball: &Rect, paddle: &Rect) -> bool {
     ball_centre < paddle_centre
 }
 
-fn main() -> GameResult {
+fn main() -> anyhow::Result<()> {
+    // Register the local project directory as a place to look for assets.
+    let resource_dir = env::var("CARGO_MANIFEST_DIR")?;
+
     let (mut ctx, mut event_loop) = ContextBuilder::new("Pong", "Colin Woodbury")
         .window_mode(WindowMode::default().dimensions(SCREEN_WIDTH, SCREEN_HEIGHT))
+        .add_resource_path(resource_dir)
         .build()?;
+
     let mut state = State::new(&mut ctx)?;
-    ggez::event::run(&mut ctx, &mut event_loop, &mut state)
+
+    let result = ggez::event::run(&mut ctx, &mut event_loop, &mut state)?;
+
+    Ok(result)
 }

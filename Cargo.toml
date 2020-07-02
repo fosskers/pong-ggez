@@ -5,4 +5,5 @@ authors = ["Colin Woodbury <colin@fosskers.ca>"]
 edition = "2018"
 
 [dependencies]
+anyhow = "1.0"
 ggez = "0.5"
