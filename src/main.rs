@@ -164,16 +164,16 @@ impl EventHandler for State {
         // Move the ball.
         // Did it hit a paddle?
         if self.ball.vel.x < 0.0 && self.ball.rect.overlaps(&self.l_paddle) {
-            self.ball.vel.x *= -1.0;
+            self.ball.vel.x *= -1.05;
             if above_centre(&self.ball.rect, &self.l_paddle) {
-                self.ball.vel.y *= -1.0;
+                self.ball.vel.y *= -1.05;
             }
             self.paddle_sound.play()?;
         }
         if self.ball.vel.x > 0.0 && self.ball.rect.overlaps(&self.r_paddle) {
-            self.ball.vel.x *= -1.0;
+            self.ball.vel.x *= -1.05;
             if above_centre(&self.ball.rect, &self.r_paddle) {
-                self.ball.vel.y *= -1.0;
+                self.ball.vel.y *= -1.05;
             }
             self.paddle_sound.play()?;
         }
